@@ -16,38 +16,50 @@ validCols = ['Shares (Basic)', 'Shares (Diluted)', 'Revenue', 'Cost of Revenue',
        'Income Tax (Expense) Benefit, Net']
        
 
-def sendEmail(finalScores):
+def sendEmail(finalScores, filePath):
     SENDER = "Anomaly Detector <arjavibahety@gmail.com>"
     RECIPIENT = "arjavibahety@gmail.com"
     AWS_REGION = "ap-southeast-1"
     SUBJECT = "Anomaly Detection Results"
     
-    emailText = "Anomalies were found in the following: "
-    emailHTML = "<tr><th>Row Index</th><th>Column</th><th>Value</th><th>Anomaly Score</th></tr>"
-    for row in finalScores:
-        emailText += "\n" + str(row['row_index']) + str(row['col']) + str(row['csvContent']) + str(row['anomalousScore'])
-        emailHTML += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(str(row['row_index']), str(row['col']), str(row['csvContent']), str(row['anomalousScore']))
-    
-    BODY_TEXT = (emailText)
-    BODY_HTML = """
-    <html>
-    <head>
-    <style>
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 5px;
-    }
-    </style>
-    </head>
-    <body>
-        <p>Anomalies were found in the following rows: </p>
-        <table> """ + emailHTML + """</table>
-    </body>
-    </html>
-    """         
+    if len(finalScores) == 0:
+        emailText = "No anomalies found in file {}".format(filePath)
+        emailHTML = emailText
+        BODY_TEXT = (emailText)
+        BODY_HTML = """
+            <html>
+            <body>
+            {}
+            </body>
+            </html>
+            """.format(emailHTML)
+    else:
+        emailText = "Anomalies were found in the file: " + filePath
+        emailHTML = "<tr><th>Row Index</th><th>Column</th><th>Value</th><th>Anomaly Score</th></tr>"
+        for row in finalScores:
+            emailText += "\n" + str(row['row_index']) + str(row['col']) + str(row['csvContent']) + str(row['anomalousScore'])
+            emailHTML += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(str(row['row_index']), str(row['col']), str(row['csvContent']), str(row['anomalousScore']))
+        
+        BODY_TEXT = (emailText)
+        BODY_HTML = """
+        <html>
+        <head>
+        <style>
+        table, th, td {
+          border: 1px solid black;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 5px;
+        }
+        </style>
+        </head>
+        <body>
+            <p>Anomalies were found in the file: """ + filePath + """: </p>
+            <table> """ + emailHTML + """</table>
+        </body>
+        </html>
+        """         
     
     # The character encoding for the email.
     CHARSET = "UTF-8"
@@ -157,7 +169,7 @@ def main(filePath, inferenceEndpoint, meanPath, sdPath, anomThreshold):
     print("rawScores: ", rawScores)
     finalScores = getFinalScores(rawScores, csvContent, payloadCols, anomThreshold)
     print("finalScores: ", finalScores)
-    emailResponse = sendEmail(finalScores)
+    emailResponse = sendEmail(finalScores, filePath)
     print(emailResponse)
 
 if __name__== "__main__" :
